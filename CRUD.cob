@@ -137,12 +137,18 @@
                DISPLAY SCR.
                ACCEPT CREATE-SCR.
 
-               WRITE CLIENTS-REG
-                   INVALID KEY
-                       MOVE "CONFLICT" TO WRK-MSG
-                   NOT INVALID KEY
-                       MOVE "CREATED" TO WRK-MSG
-               END-WRITE.
+               IF CLIENTS-KEY-NUMBER = ZEROES OR
+                       (CLIENTS-NAME = SPACES AND
+                        CLIENTS-EMAIL = SPACES)
+                   MOVE "INSERT KEY AND NAME OR EMAIL" TO WRK-MSG
+               ELSE
+                   WRITE CLIENTS-REG
+                       INVALID KEY
+                           MOVE "CONFLICT" TO WRK-MSG
+                       NOT INVALID KEY
+                           MOVE "CREATED" TO WRK-MSG
+                   END-WRITE
+               END-IF.
 
                ACCEPT MSG.
                PERFORM CREATE-AGAIN-OR-QUIT.
