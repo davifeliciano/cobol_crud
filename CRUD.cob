@@ -21,7 +21,9 @@
        77 WRK-TITLE        PIC X(16) VALUE "BASIC COBOL CRUD".
        77 WRK-CURRENT-SCR  PIC X(8) VALUE SPACES.
        77 WRK-MSG          PIC X(32) VALUE SPACES.
+       77 WRK-FOOTER       PIC X(64) VALUE SPACES.
        77 WRK-OPTION       PIC X(1).
+       77 WRK-CURSOR       PIC X(1).
 
        SCREEN SECTION.
            01 SCR.
@@ -33,8 +35,12 @@
                    10 LINE 02 COLUMN 01 ERASE EOL BACKGROUND-COLOR 1.
                    10 LINE 02 COLUMN 10 BACKGROUND-COLOR 1
                        FROM WRK-CURRENT-SCR.
-                   10 LINE 03 COLUMN 01 ERASE EOL.
-                   10 LINE 03 COLUMN 30 FOREGROUND-COLOR 4 FROM WRK-MSG.
+
+           01 MSG.
+               05 LINE 03 COLUMN 01 ERASE EOL.
+               05 LINE 03 COLUMN 30 FOREGROUND-COLOR 4 FROM WRK-MSG.
+               05 LINE 24 COLUMN 01 FROM WRK-FOOTER.
+               05 COLUMN PLUS 02 USING WRK-CURSOR AUTO-SKIP.
 
            01 MN.
                05 LINE 04 COLUMN 10 VALUE "1 - CREATE".
@@ -60,7 +66,8 @@
        PROCEDURE DIVISION.
            PERFORM 0000-OPEN-FILE.
            PERFORM 0100-INIT-SCR.
-           PERFORM 0200-PROCESS-OPTION UNTIL WRK-OPTION = "Q".
+           PERFORM 0200-PROCESS-OPTION UNTIL WRK-OPTION = "Q"
+               OR WRK-OPTION = "q".
            PERFORM 1000-CLOSE-FILE.
            STOP RUN.
 
@@ -73,15 +80,26 @@
                    OPEN I-O CLIENTS
                END-IF.
 
+
+           1000-CLOSE-FILE.
+               CLOSE CLIENTS.
+
+           CLEAR-MSG.
+               MOVE SPACES TO WRK-MSG.
+               MOVE SPACES TO WRK-FOOTER.
+               MOVE SPACES TO WRK-CURSOR.
+
            0100-INIT-SCR.
+               PERFORM CLEAR-MSG.
                MOVE SPACES TO WRK-CURRENT-SCR.
+               MOVE SPACES TO WRK-OPTION.
                DISPLAY SCR.
                ACCEPT MN.
 
            0200-PROCESS-OPTION.
                EVALUATE WRK-OPTION
                    WHEN 1
-                      PERFORM 0210-CREATE
+                      PERFORM CREATE
                    WHEN 2
                       CONTINUE
                    WHEN 3
@@ -96,20 +114,35 @@
                        CONTINUE
                    WHEN OTHER
                       MOVE "INVALID OPTION" TO WRK-MSG
+                      MOVE "PRESS ANY KEY TO DISMISS" TO WRK-FOOTER
+                      ACCEPT MSG
                       PERFORM 0100-INIT-SCR
                END-EVALUATE.
 
-           0210-CREATE.
+           CREATE-AGAIN-OR-QUIT.
+               IF WRK-CURSOR = "Q" OR WRK-CURSOR = "q"
+                   PERFORM 0100-INIT-SCR
+               ELSE
+                   PERFORM CREATE
+               END-IF.
+
+           CREATE.
+               PERFORM CLEAR-MSG.
                MOVE "CREATE" TO WRK-CURRENT-SCR.
-               MOVE SPACES TO WRK-MSG.
+               MOVE SPACES TO CLIENTS-REG.
                DISPLAY SCR.
                ACCEPT CREATE-SCR.
 
                WRITE CLIENTS-REG
-                   INVALID KEY MOVE "CONFLICT" TO WRK-MSG
+                   INVALID KEY
+                       MOVE "CONFLICT" TO WRK-MSG
+                       MOVE "PRESS Q TO QUIT, ANY OTHER TO TRY AGAIN"
+                           TO WRK-FOOTER
+                   NOT INVALID KEY
+                       MOVE "CREATED" TO WRK-MSG
+                       MOVE "PRESS Q TO QUIT, ANY OTHER TO CREATE AGAIN"
+                           TO WRK-FOOTER
                END-WRITE.
 
-               PERFORM 0100-INIT-SCR.
-
-           1000-CLOSE-FILE.
-               CLOSE CLIENTS.
+               ACCEPT MSG.
+               PERFORM CREATE-AGAIN-OR-QUIT.
