@@ -42,6 +42,11 @@
                    "PRESS Q TO QUIT, ANY OTHER KEY TO REPEAT --->".
                05 COLUMN PLUS 02 USING WRK-CURSOR AUTO-SKIP.
 
+           01 DELETE-CONFIRM.
+               05 LINE 24 COLUMN 01 VALUE
+                   "PRESS Y TO CONFIRM DELETE --->".
+               05 COLUMN PLUS 02 USING WRK-CURSOR AUTO-SKIP.
+
            01 MN.
                05 LINE 04 COLUMN 10 VALUE "1 - CREATE".
                05 LINE 05 COLUMN 10 VALUE "2 - READ".
@@ -74,7 +79,7 @@
            0000-OPEN-FILE.
                OPEN I-O CLIENTS
 
-               IF CLIENTS-FILE-STATUS = 35 THEN
+               IF CLIENTS-FILE-STATUS = 35
                    OPEN OUTPUT CLIENTS
                    CLOSE CLIENTS
                    OPEN I-O CLIENTS
@@ -96,9 +101,11 @@
            0200-PROCESS-OPTION.
                EVALUATE WRK-OPTION
                    WHEN 1
-                      PERFORM CREATE-OP
+                       PERFORM CREATE-OP
                    WHEN 2
-                      PERFORM READ-OP
+                       PERFORM READ-OP
+                   WHEN 4
+                       PERFORM DELETE-OP
                    WHEN OTHER
                        MOVE "INVALID OPTION" TO WRK-MSG
                        ACCEPT MSG
@@ -117,11 +124,13 @@
                ELSE
                    EVALUATE WRK-OPTION
                        WHEN 1
-                          PERFORM CREATE-OP
+                           PERFORM CREATE-OP
                        WHEN 2
-                          PERFORM READ-OP
+                           PERFORM READ-OP
+                       WHEN 4
+                           PERFORM DELETE-OP
                        WHEN OTHER
-                          PERFORM 0100-INIT-SCR
+                           PERFORM 0100-INIT-SCR
                    END-EVALUATE
                END-IF.
 
@@ -161,6 +170,35 @@
                    NOT INVALID KEY
                        MOVE "SUCCESS" TO WRK-MSG
                        DISPLAY DATA-FORM
+               END-READ.
+
+               ACCEPT MSG.
+               PERFORM OP-AGAIN-OR-QUIT.
+
+           DELETE-OP.
+               PERFORM CLEAR-MSG.
+               MOVE "DELETE" TO WRK-CURRENT-SCR.
+               MOVE SPACES TO CLIENTS-REG.
+               DISPLAY SCR.
+               ACCEPT KEY-INPUT.
+
+               READ CLIENTS
+                   INVALID KEY
+                       MOVE "NOT FOUND" TO WRK-MSG
+                   NOT INVALID KEY
+                       DISPLAY DATA-FORM
+                       ACCEPT DELETE-CONFIRM
+
+                       IF WRK-CURSOR = "Y" OR WRK-CURSOR = "y"
+                           DELETE CLIENTS
+                               INVALID KEY
+                                   MOVE "NOT FOUND" TO WRK-MSG
+                               NOT INVALID
+                                   MOVE "DELETED" TO WRK-MSG
+                           END-DELETE
+                       ELSE
+                           MOVE "NOT DELETED" TO WRK-MSG
+                       END-IF
                END-READ.
 
                ACCEPT MSG.
