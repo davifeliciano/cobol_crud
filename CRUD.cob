@@ -85,13 +85,11 @@
                CLOSE CLIENTS.
 
            CLEAR-MSG.
-               MOVE SPACES TO WRK-MSG.
-               MOVE SPACES TO WRK-CURSOR.
+               MOVE SPACES TO WRK-MSG WRK-CURSOR.
 
            0100-INIT-SCR.
                PERFORM CLEAR-MSG.
-               MOVE SPACES TO WRK-CURRENT-SCR.
-               MOVE SPACES TO WRK-OPTION.
+               MOVE SPACES TO WRK-CURRENT-SCR WRK-OPTION.
                DISPLAY SCR.
                ACCEPT MN.
 
@@ -101,16 +99,6 @@
                       PERFORM CREATE-OP
                    WHEN 2
                       PERFORM READ-OP
-                   WHEN 3
-                      CONTINUE
-                   WHEN 4
-                      CONTINUE
-                   WHEN 5
-                      CONTINUE
-                   WHEN 6
-                      CONTINUE
-                   WHEN "X"
-                       CONTINUE
                    WHEN OTHER
                        MOVE "INVALID OPTION" TO WRK-MSG
                        ACCEPT MSG
@@ -123,11 +111,18 @@
                        END-IF
                END-EVALUATE.
 
-           CREATE-AGAIN-OR-QUIT.
+           OP-AGAIN-OR-QUIT.
                IF WRK-CURSOR = "Q" OR WRK-CURSOR = "q"
                    PERFORM 0100-INIT-SCR
                ELSE
-                   PERFORM CREATE-OP
+                   EVALUATE WRK-OPTION
+                       WHEN 1
+                          PERFORM CREATE-OP
+                       WHEN 2
+                          PERFORM READ-OP
+                       WHEN OTHER
+                          PERFORM 0100-INIT-SCR
+                   END-EVALUATE
                END-IF.
 
            CREATE-OP.
@@ -151,14 +146,7 @@
                END-IF.
 
                ACCEPT MSG.
-               PERFORM CREATE-AGAIN-OR-QUIT.
-
-           READ-AGAIN-OR-QUIT.
-               IF WRK-CURSOR = "Q" OR WRK-CURSOR = "q"
-                   PERFORM 0100-INIT-SCR
-               ELSE
-                   PERFORM READ-OP
-               END-IF.
+               PERFORM OP-AGAIN-OR-QUIT.
 
            READ-OP.
                PERFORM CLEAR-MSG.
@@ -176,4 +164,4 @@
                END-READ.
 
                ACCEPT MSG.
-               PERFORM READ-AGAIN-OR-QUIT.
+               PERFORM OP-AGAIN-OR-QUIT.
