@@ -21,7 +21,6 @@
        77 WRK-TITLE        PIC X(16) VALUE "BASIC COBOL CRUD".
        77 WRK-CURRENT-SCR  PIC X(8) VALUE SPACES.
        77 WRK-MSG          PIC X(32) VALUE SPACES.
-       77 WRK-FOOTER       PIC X(64) VALUE SPACES.
        77 WRK-OPTION       PIC X(1).
        77 WRK-CURSOR       PIC X(1).
 
@@ -39,7 +38,8 @@
            01 MSG.
                05 LINE 03 COLUMN 01 ERASE EOL.
                05 LINE 03 COLUMN 30 FOREGROUND-COLOR 4 FROM WRK-MSG.
-               05 LINE 24 COLUMN 01 FROM WRK-FOOTER.
+               05 LINE 24 COLUMN 01 VALUE
+                   "PRESS Q TO QUIT, ANY OTHER KEY TO REPEAT --->".
                05 COLUMN PLUS 02 USING WRK-CURSOR AUTO-SKIP.
 
            01 MN.
@@ -86,7 +86,6 @@
 
            CLEAR-MSG.
                MOVE SPACES TO WRK-MSG.
-               MOVE SPACES TO WRK-FOOTER.
                MOVE SPACES TO WRK-CURSOR.
 
            0100-INIT-SCR.
@@ -99,9 +98,9 @@
            0200-PROCESS-OPTION.
                EVALUATE WRK-OPTION
                    WHEN 1
-                      PERFORM CREATE
+                      PERFORM CREATE-OP
                    WHEN 2
-                      CONTINUE
+                      PERFORM READ-OP
                    WHEN 3
                       CONTINUE
                    WHEN 4
@@ -113,20 +112,25 @@
                    WHEN "X"
                        CONTINUE
                    WHEN OTHER
-                      MOVE "INVALID OPTION" TO WRK-MSG
-                      MOVE "PRESS ANY KEY TO DISMISS" TO WRK-FOOTER
-                      ACCEPT MSG
-                      PERFORM 0100-INIT-SCR
+                       MOVE "INVALID OPTION" TO WRK-MSG
+                       ACCEPT MSG
+
+                       IF WRK-CURSOR = "Q" OR WRK-CURSOR = "q"
+                           PERFORM 1000-CLOSE-FILE
+                           STOP RUN
+                       ELSE
+                           PERFORM 0100-INIT-SCR
+                       END-IF
                END-EVALUATE.
 
            CREATE-AGAIN-OR-QUIT.
                IF WRK-CURSOR = "Q" OR WRK-CURSOR = "q"
                    PERFORM 0100-INIT-SCR
                ELSE
-                   PERFORM CREATE
+                   PERFORM CREATE-OP
                END-IF.
 
-           CREATE.
+           CREATE-OP.
                PERFORM CLEAR-MSG.
                MOVE "CREATE" TO WRK-CURRENT-SCR.
                MOVE SPACES TO CLIENTS-REG.
@@ -136,13 +140,34 @@
                WRITE CLIENTS-REG
                    INVALID KEY
                        MOVE "CONFLICT" TO WRK-MSG
-                       MOVE "PRESS Q TO QUIT, ANY OTHER TO TRY AGAIN"
-                           TO WRK-FOOTER
                    NOT INVALID KEY
                        MOVE "CREATED" TO WRK-MSG
-                       MOVE "PRESS Q TO QUIT, ANY OTHER TO CREATE AGAIN"
-                           TO WRK-FOOTER
                END-WRITE.
 
                ACCEPT MSG.
                PERFORM CREATE-AGAIN-OR-QUIT.
+
+           READ-AGAIN-OR-QUIT.
+               IF WRK-CURSOR = "Q" OR WRK-CURSOR = "q"
+                   PERFORM 0100-INIT-SCR
+               ELSE
+                   PERFORM READ-OP
+               END-IF.
+
+           READ-OP.
+               PERFORM CLEAR-MSG.
+               MOVE "READ" TO WRK-CURRENT-SCR.
+               MOVE SPACES TO CLIENTS-REG.
+               DISPLAY SCR.
+               ACCEPT KEY-INPUT.
+
+               READ CLIENTS
+                   INVALID KEY
+                       MOVE "NOT FOUND" TO WRK-MSG
+                   NOT INVALID KEY
+                       MOVE "SUCCESS" TO WRK-MSG
+                       DISPLAY DATA-FORM
+               END-READ.
+
+               ACCEPT MSG.
+               PERFORM READ-AGAIN-OR-QUIT.
