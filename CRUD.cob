@@ -104,6 +104,8 @@
                        PERFORM CREATE-OP
                    WHEN 2
                        PERFORM READ-OP
+                   WHEN 3
+                       PERFORM UPDATE-OP
                    WHEN 4
                        PERFORM DELETE-OP
                    WHEN OTHER
@@ -127,6 +129,8 @@
                            PERFORM CREATE-OP
                        WHEN 2
                            PERFORM READ-OP
+                       WHEN 3
+                           PERFORM UPDATE-OP
                        WHEN 4
                            PERFORM DELETE-OP
                        WHEN OTHER
@@ -170,6 +174,30 @@
                    NOT INVALID KEY
                        MOVE "SUCCESS" TO WRK-MSG
                        DISPLAY DATA-FORM
+               END-READ.
+
+               ACCEPT MSG.
+               PERFORM OP-AGAIN-OR-QUIT.
+
+           UPDATE-OP.
+               PERFORM CLEAR-MSG.
+               MOVE "UPDATE" TO WRK-CURRENT-SCR.
+               MOVE SPACES TO CLIENTS-REG.
+               DISPLAY SCR.
+               ACCEPT KEY-INPUT.
+
+               READ CLIENTS
+                   INVALID KEY
+                       MOVE "NOT FOUND" TO WRK-MSG
+                   NOT INVALID KEY
+                       ACCEPT DATA-FORM
+                       REWRITE CLIENTS-REG
+
+                       IF CLIENTS-FILE-STATUS = 0
+                           MOVE "UPDATED" TO WRK-MSG
+                       ELSE
+                           MOVE "NOT UPDATED" TO WRK-MSG
+                       END-IF
                END-READ.
 
                ACCEPT MSG.
