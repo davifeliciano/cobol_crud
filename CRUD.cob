@@ -5,9 +5,13 @@
        FILE-CONTROL.
            SELECT CLIENTS ASSIGN TO "CLIENTS.dat"
                ORGANIZATION IS INDEXED
-               ACCESS MODE IS RANDOM
+               ACCESS MODE IS DYNAMIC
                FILE STATUS IS CLIENTS-FILE-STATUS
                RECORD KEY IS CLIENTS-KEY.
+
+           SELECT CLIENTS-EXPORT ASSIGN TO "CLIENTS.txt"
+               ORGANIZATION IS LINE SEQUENTIAL.
+
        DATA DIVISION.
        FILE SECTION.
        FD CLIENTS.
@@ -16,13 +20,19 @@
                10 CLIENTS-KEY-NUMBER   PIC 9(8).
            05 CLIENTS-NAME             PIC X(16).
            05 CLIENTS-EMAIL            PIC X(64).
+
+       FD CLIENTS-EXPORT.
+       01 EXPORT-REG.
+           05 EXPORT-DATA PIC X(88).
+
        WORKING-STORAGE SECTION.
        77 CLIENTS-FILE-STATUS  PIC 99.
-       77 WRK-TITLE        PIC X(16) VALUE "BASIC COBOL CRUD".
-       77 WRK-CURRENT-SCR  PIC X(8) VALUE SPACES.
-       77 WRK-MSG          PIC X(32) VALUE SPACES.
-       77 WRK-OPTION       PIC X(1).
-       77 WRK-CURSOR       PIC X(1).
+       77 WRK-TITLE            PIC X(16) VALUE "BASIC COBOL CRUD".
+       77 WRK-CURRENT-SCR      PIC X(8) VALUE SPACES.
+       77 WRK-MSG              PIC X(32) VALUE SPACES.
+       77 WRK-OPTION           PIC X(1).
+       77 WRK-CURSOR           PIC X(1).
+       77 WRK-RECORDS-COUNT    PIC 9(6) VALUE ZEROES.
 
        SCREEN SECTION.
            01 SCR.
@@ -38,6 +48,7 @@
            01 MSG.
                05 LINE 03 COLUMN 01 ERASE EOL.
                05 LINE 03 COLUMN 30 FOREGROUND-COLOR 4 FROM WRK-MSG.
+               05 LINE 24 COLUMN 01 ERASE EOL.
                05 LINE 24 COLUMN 01 VALUE
                    "PRESS Q TO QUIT, ANY OTHER KEY TO REPEAT --->".
                05 COLUMN PLUS 02 USING WRK-CURSOR AUTO-SKIP.
@@ -47,12 +58,26 @@
                    "PRESS Y TO CONFIRM DELETE --->".
                05 COLUMN PLUS 02 USING WRK-CURSOR AUTO-SKIP.
 
+           01 EXPORT-LOADER.
+               05 LINE 24 COLUMN 01 ERASE EOL.
+               05 LINE 24 COLUMN 01 VALUE
+                   "EXPORTING TO CLIENTS.txt".
+
+           01 EXPORT-DONE.
+               05 LINE 24 COLUMN 01 ERASE EOL.
+               05 LINE 23 COLUMN 01 VALUE
+                   "RECORDS EXPORTED TO CLIENTS.txt: ".
+               05 LINE 23 COLUMN 34 FROM WRK-RECORDS-COUNT.
+               05 LINE 24 COLUMN 01 VALUE
+                   "PRESS ANY KEY TO DISSMIS".
+               05 LINE 24 COLUMN 80 USING WRK-CURSOR AUTO-SKIP.
+
            01 MN.
                05 LINE 04 COLUMN 10 VALUE "1 - CREATE".
                05 LINE 05 COLUMN 10 VALUE "2 - READ".
                05 LINE 06 COLUMN 10 VALUE "3 - UPDATE".
                05 LINE 07 COLUMN 10 VALUE "4 - DELETE".
-               05 LINE 08 COLUMN 10 VALUE "5 - GENERATE REPORT".
+               05 LINE 08 COLUMN 10 VALUE "5 - EXPORT".
                05 LINE 09 COLUMN 10 VALUE "Q - QUIT".
                05 LINE 10 COLUMN 10 VALUE "INSERT AN OPTION:".
                05 LINE 10 COLUMN 28 USING WRK-OPTION.
@@ -108,6 +133,8 @@
                        PERFORM UPDATE-OP
                    WHEN 4
                        PERFORM DELETE-OP
+                   WHEN 5
+                       PERFORM EXPORT-OP
                    WHEN OTHER
                        MOVE "INVALID OPTION" TO WRK-MSG
                        ACCEPT MSG
@@ -133,6 +160,8 @@
                            PERFORM UPDATE-OP
                        WHEN 4
                            PERFORM DELETE-OP
+                       WHEN 5
+                           PERFORM EXPORT-OP
                        WHEN OTHER
                            PERFORM 0100-INIT-SCR
                    END-EVALUATE
@@ -231,3 +260,24 @@
 
                ACCEPT MSG.
                PERFORM OP-AGAIN-OR-QUIT.
+
+
+
+           EXPORT-OP.
+               OPEN OUTPUT CLIENTS-EXPORT.
+               MOVE ZEROES TO WRK-RECORDS-COUNT.
+               DISPLAY EXPORT-LOADER.
+               START CLIENTS FIRST.
+               READ CLIENTS NEXT.
+
+               PERFORM UNTIL CLIENTS-FILE-STATUS = 10 OR
+                             CLIENTS-FILE-STATUS = 23
+                   MOVE CLIENTS-REG TO EXPORT-REG
+                   WRITE EXPORT-REG
+                   READ CLIENTS NEXT
+                   ADD 01 TO WRK-RECORDS-COUNT
+               END-PERFORM
+
+               CLOSE CLIENTS-EXPORT.
+               ACCEPT EXPORT-DONE.
+               PERFORM 0100-INIT-SCR.
