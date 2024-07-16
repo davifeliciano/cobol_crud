@@ -47,7 +47,7 @@
 
            01 MSG.
                05 LINE 03 COLUMN 01 ERASE EOL.
-               05 LINE 03 COLUMN 30 FOREGROUND-COLOR 4 FROM WRK-MSG.
+               05 LINE 03 COLUMN 30 FOREGROUND-COLOR 2 FROM WRK-MSG.
                05 LINE 24 COLUMN 01 ERASE EOL.
                05 LINE 24 COLUMN 01 VALUE
                    "PRESS Q TO QUIT, ANY OTHER KEY TO REPEAT --->".
@@ -86,12 +86,14 @@
                05 KEY-INPUT FOREGROUND-COLOR 2.
                    10 LINE 04 COLUMN 10 VALUE "KEY:".
                    10 COLUMN PLUS 02 PIC 9(8) USING CLIENTS-KEY-NUMBER
-                       BLANK WHEN ZEROES.
+                       BLANK WHEN ZEROES AUTO-SKIP.
                05 DATA-FORM.
                    10 LINE 05 COLUMN 10 VALUE "NAME:".
-                   10 COLUMN PLUS 02 PIC X(16) USING CLIENTS-NAME.
+                   10 COLUMN PLUS 02 PIC X(16) USING CLIENTS-NAME
+                       AUTO-SKIP.
                    10 LINE 06 COLUMN 10 VALUE "EMAIL:".
-                   10 COLUMN PLUS 02 PIC X(64) USING CLIENTS-EMAIL.
+                   10 COLUMN PLUS 02 PIC X(64) USING CLIENTS-EMAIL
+                       AUTO-SKIP.
 
        PROCEDURE DIVISION.
            PERFORM 0000-OPEN-FILE.
