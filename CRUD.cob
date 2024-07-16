@@ -270,8 +270,7 @@
                START CLIENTS FIRST.
                READ CLIENTS NEXT.
 
-               PERFORM UNTIL CLIENTS-FILE-STATUS = 10 OR
-                             CLIENTS-FILE-STATUS = 23
+               PERFORM UNTIL CLIENTS-FILE-STATUS <> 0
                    MOVE CLIENTS-REG TO EXPORT-REG
                    WRITE EXPORT-REG
                    READ CLIENTS NEXT
